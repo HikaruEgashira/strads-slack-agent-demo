@@ -42,6 +42,9 @@ from strands_agents_builder.utils.kb_utils import load_system_prompt
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+os.environ["NO_COLOR"] = "1"
+os.environ["STRANDS_TOOL_CONSOLE_MODE"] = "enabled"
+
 # installation_store = FileInstallationStore(base_dir="./data/installations")
 state_store = FileOAuthStateStore(
     expiration_seconds=600,
@@ -110,41 +113,74 @@ def get_strands_agent() -> Agent:
     
     return strands_agent
 
+def get_user_display_name(client, user_id: str) -> str:
+    try:
+        if not user_id or user_id == "unknown":
+            return "unknown"
+            
+        response = client.users_info(user=user_id)
+        if response.get("ok"):
+            user = response.get("user", {})
+            return user.get("real_name") or user.get("name", user_id)
+    except Exception as e:
+        logger.warning(f"Failed to get user info for {user_id}: {str(e)}")
+    return user_id
 
-def extract_mention_text(event: dict[str, Any]) -> str:
-    text = event.get("text", "")
-    bot_id = event.get("bot_id", "")
-    
-    mention = f"<@{bot_id}>"
-    if text.startswith(mention):
-        return text[len(mention):].strip()
-    return text.strip()
-
+def build_conversation_history(client, channel_id: str, thread_ts: str) -> str:
+    try:
+        logger.info(f"Fetching conversation history for channel: {channel_id}, thread_ts: {thread_ts}")
+        
+        auth_response = client.auth_test()
+        if not auth_response.get("ok"):
+            logger.warning(f"Failed to get bot user ID: {auth_response.get('error', 'unknown error')}")
+            return ""
+            
+        bot_user_id = auth_response.get("user_id")
+        bot_display_name = get_user_display_name(client, bot_user_id)
+        logger.info(f"Bot user ID: {bot_user_id}, Display name: {bot_display_name}")
+        
+        response = client.conversations_replies(
+            channel=channel_id,
+            ts=thread_ts,
+            inclusive=True,
+            limit=100
+        )
+        
+        if not response.get("ok"):
+            logger.warning(f"Failed to fetch thread messages: {response.get('error', 'unknown error')}")
+            return ""
+            
+        messages = response.get("messages", [])
+        conversation = []
+        
+        for msg in messages:
+            user_id = msg.get("user", "unknown")
+            display_name = get_user_display_name(client, user_id)
+            text = msg.get("text", "")
+            conversation.append(f"{display_name}: {text}")
+        
+        return "\n".join(conversation)
+        
+    except Exception as e:
+        logger.error(f"Error building conversation history: {str(e)}", exc_info=True)
+        return ""
 
 @app.event("app_mention")
-def handle_mentions(body: dict[str, Any], say, logger) -> None:
+def handle_mentions(body: dict[str, Any], say, logger, client) -> None:
     try:
         event = body.get("event", {})
+        channel = event.get("channel")
         thread_ts = event.get("thread_ts") or event.get("ts")
         
-        query = extract_mention_text(event)
+        logger.info(f"Event data: channel={channel}, thread_ts={thread_ts}")
         
-        logger.info(f"Received mention: {query}")
-        
-        if not query:
-            say("こんにちは！何かお手伝いできることはありますか？", thread_ts=thread_ts)
-            return
-        
+        conversation = build_conversation_history(client, channel, thread_ts)
         agent = get_strands_agent()
         
-        say(f"`{query}` について調べます。少々お待ちください...", thread_ts=thread_ts)
-        
         try:
-            response = agent(query)
-            
+            response = agent(conversation)
             response_text = str(response) if response else "申し訳ありませんが、回答を生成できませんでした。"
             say(response_text, thread_ts=thread_ts)
-            
             logger.info(f"Responded to mention: {response_text}")
             
         except Exception as e:
