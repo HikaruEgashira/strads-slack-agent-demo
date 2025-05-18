@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -468,6 +469,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bb/ff/b4c0dc78fbe20c3e59c0c7334de0c27eb4001a2b2017999af398bf730817/execnet-2.1.1.tar.gz", hash = "sha256:5189b52c6121c24feae288166ab41b32549c7e2348652736540b9e6e7d4e72e3", size = 166524 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/09/2aea36ff60d16dd8879bdb2f5b3ee0ba8d08cbbdcdfe870e695ce3784385/execnet-2.1.1-py3-none-any.whl", hash = "sha256:26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc", size = 40612 },
+]
+
+[[package]]
+name = "fastapi"
+version = "0.115.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "starlette" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f4/55/ae499352d82338331ca1e28c7f4a63bfd09479b16395dce38cf50a39e2c2/fastapi-0.115.12.tar.gz", hash = "sha256:1e2c2a2646905f9e83d32f04a3f86aff4a286669c6c950ca95b5fd68c2602681", size = 295236 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/b3/b51f09c2ba432a576fe63758bddc81f78f0c6309d9e5c10d194313bf021e/fastapi-0.115.12-py3-none-any.whl", hash = "sha256:e94613d6c05e27be7ffebdd6ea5f388112e5e430c8f7d6494a9d1d88d43e814d", size = 95164 },
 ]
 
 [[package]]
@@ -1781,9 +1796,12 @@ name = "strands-agents-builder"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "boto3" },
+    { name = "fastapi" },
     { name = "halo" },
     { name = "prompt-toolkit" },
     { name = "rich" },
+    { name = "slack-bolt" },
     { name = "strands-agents", extra = ["ollama"] },
     { name = "strands-agents-tools" },
 ]
@@ -1809,7 +1827,9 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "boto3", specifier = ">=1.38.18" },
     { name = "commitizen", marker = "extra == 'dev'", specifier = ">=4.4.0,<5.0.0" },
+    { name = "fastapi", specifier = ">=0.115.12" },
     { name = "halo", specifier = ">=0.0.31,<1.0.0" },
     { name = "hatch", marker = "extra == 'dev'", specifier = ">=1.0.0,<2.0.0" },
     { name = "moto", marker = "extra == 'test'", specifier = ">=5.1.0,<6.0.0" },
@@ -1820,12 +1840,14 @@ requires-dist = [
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.0.0,<4.0.0" },
     { name = "rich", specifier = ">=14.0.0,<15.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.4,<1.0.0" },
+    { name = "slack-bolt", specifier = ">=1.23.0" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=5.0.0,<6.0.0" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=1.12.0,<2.0.0" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=1.0.0,<2.0.0" },
     { name = "strands-agents", extras = ["ollama"], specifier = ">=0.1.0,<1.0.0" },
     { name = "strands-agents-tools", specifier = ">=0.1.0,<1.0.0" },
 ]
+provides-extras = ["dev", "docs", "test"]
 
 [[package]]
 name = "strands-agents-tools"

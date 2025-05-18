@@ -30,11 +30,15 @@ dependencies = [
     "strands-agents-tools>=0.1.0,<1.0.0",
     "rich>=14.0.0,<15.0.0",
     "prompt_toolkit>=3.0.51,<4.0.0",
-    "halo>=0.0.31,<1.0.0"
+    "halo>=0.0.31,<1.0.0",
+    "slack-bolt>=1.23.0",
+    "boto3>=1.38.18",
+    "fastapi>=0.115.12",
 ]
 
 [project.scripts]
 strands = "strands_agents_builder.strands:main"
+strands-slack = "strands_agents_builder.slack:run_server"
 
 [tool.hatch.metadata]
 allow-direct-references = true
